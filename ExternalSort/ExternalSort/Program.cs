@@ -5,16 +5,17 @@ namespace ExternalSort
 {
     class Program
     {
-        public static double[] arr = new double[100];
+        public static double[] arr = new double[] {119,354,293,56,164,45,309,241,124,45};
         public static void Main(string[] args)
         {
-            string file = "..\\..\\..\\..\\NaturalMerge.txt";
+            string file = "..\\..\\..\\..\\Merge.txt";
             LargeFileGeneration(file);
             DirectMerge direct = new DirectMerge(file);
             NaturalMerge natural = new NaturalMerge(file);
-            //double[] outp = direct.Sort();
+            MultipathMerge multipath = new MultipathMerge(file);
+            //double[] outd = direct.Sort();
             double[] outn=natural.Sort();
-            
+            //double[] outm = multipath.Sort();
 
         }
 
@@ -24,11 +25,11 @@ namespace ExternalSort
             using (BinaryWriter bw = new BinaryWriter(File.Create(file, 256), Encoding.UTF8))
             {
                 Random rnd = new Random();
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 10; i++)
                 {
                     double a = rnd.Next(500);
-                    bw.Write(a);
-                    arr[i] = a;
+                    bw.Write(arr[i]);
+                    //arr[i] = a;
                 }
             }
         }
