@@ -14,9 +14,6 @@ namespace ExternalSort
     }
     public class MultipathMerge
     {
-        //List<double> Main = new List<double>();
-        //List<double> MainA = new List<double>();
-        //List<double> MainB = new List<double>();
         public string FileInput { get; set; }
         private long segments;
 
@@ -26,11 +23,21 @@ namespace ExternalSort
 
         }
 
-        public double[] Sort()
+        public double[] Sort(double[] array)
+        {
+            return SortNumbers();
+        }
+
+        public string[] Sort(string[] array)
+        {
+            return SortStrings();
+        }
+
+        public string[] SortStrings()
         {
             while (true)
             {
-                SplitToFiles();
+                SplitStringsToFiles();
                 // суть сортировки заключается в распределении на
                 // отсортированные последовательности.
                 // если после распределения на 2 вспомогательных файла
@@ -40,7 +47,42 @@ namespace ExternalSort
                 {
                     break;
                 }
-                MergePairs();
+                MergeStringsPairs();
+            }
+            Console.WriteLine();
+            List<string> points = new List<string>();
+            using (BinaryReader reader = new BinaryReader(File.OpenRead(FileInput), Encoding.UTF8))
+            {
+                while (true)
+                {
+                    try
+                    {
+                        points.Add(reader.ReadString());
+                    }
+                    catch (Exception ignoreException)
+                    {
+                        break;
+                    }
+                }
+            }
+            return points.ToArray();
+        }
+
+        public double[] SortNumbers()
+        {
+            while (true)
+            {
+                SplitNumbersToFiles();
+                // суть сортировки заключается в распределении на
+                // отсортированные последовательности.
+                // если после распределения на 2 вспомогательных файла
+                // выясняется, что последовательность одна, значит файл
+                // отсортирован, завершаем работу.
+                if (segments == 1)
+                {
+                    break;
+                }
+                MergeNumbersPairs();
             }
             Console.WriteLine();
             List<double> points = new List<double>();
@@ -57,7 +99,7 @@ namespace ExternalSort
             return points.ToArray();
         }
 
-        private void SplitToFiles() // разделение на 2 вспом. файла
+        private void SplitNumbersToFiles() // разделение на 2 вспом. файла
         {
             segments = 1;
             using (BinaryReader br = new BinaryReader(File.OpenRead(FileInput), Encoding.UTF8))
@@ -118,7 +160,7 @@ namespace ExternalSort
             }
         }
 
-        private void MergePairs() // слияние отсорт. последовательностей обратно в файл
+        private void MergeNumbersPairs() // слияние отсорт. последовательностей обратно в файл
         {
             using (BinaryReader readerA = new BinaryReader(File.OpenRead("..\\..\\..\\..\\MultipathMergeA.txt"), Encoding.UTF8))
             using (BinaryReader readerB = new BinaryReader(File.OpenRead("..\\..\\..\\..\\MultipathMergeB.txt"), Encoding.UTF8))
@@ -255,9 +297,231 @@ namespace ExternalSort
                     }
                 }
             }
+        }
+
+        private void SplitStringsToFiles()
+        {
+            segments = 1;
+            using (BinaryReader br = new BinaryReader(File.OpenRead(FileInput), Encoding.UTF8))
+            using (BinaryWriter writerA = new BinaryWriter(File.Create("..\\..\\..\\..\\MultipathMergeA.txt", 65536), Encoding.UTF8))
+            using (BinaryWriter writerB = new BinaryWriter(File.Create("..\\..\\..\\..\\MultipathMergeB.txt", 65536), Encoding.UTF8))
+            using (BinaryWriter writerC = new BinaryWriter(File.Create("..\\..\\..\\..\\MultipathMergeC.txt", 65536), Encoding.UTF8))
+            {
+                bool start = false;
+                FileToWrite fileNumber = FileToWrite.A;
 
 
+                string element = null, nextElement = null;
+                bool end = false;
+                while (!end)
+                {
 
+                    if (!start)
+                    {
+                        try
+                        {
+                            element = br.ReadString();
+                            writerA.Write(element);
+                            start = true;
+                        }
+                        catch
+                        {
+                            end = true;
+                            break;
+                        }
+                        
+                    }
+
+                    try
+                    {
+                        nextElement = br.ReadString();
+                    }
+                    catch
+                    {
+                        end = true;
+                        break;
+                    }
+
+
+                    if (!Menu.LeftBeforeRight(element , nextElement))
+                    {
+                        if (fileNumber == FileToWrite.A) fileNumber = FileToWrite.B;
+                        else if (fileNumber == FileToWrite.B) fileNumber = FileToWrite.C;
+                        else if (fileNumber == FileToWrite.C) fileNumber = FileToWrite.A;
+
+                        segments++;
+                    }
+
+                    if (fileNumber == FileToWrite.A)
+                    {
+                        writerA.Write(nextElement);
+                    }
+                    else if (fileNumber == FileToWrite.B)
+                    {
+                        writerB.Write(nextElement);
+                    }
+                    else if (fileNumber == FileToWrite.C)
+                    {
+                        writerC.Write(nextElement);
+                    }
+                    element = nextElement;
+                }
+            }
+        }
+
+        private void MergeStringsPairs()
+        {
+            using (BinaryReader readerA = new BinaryReader(File.OpenRead("..\\..\\..\\..\\MultipathMergeA.txt"), Encoding.UTF8))
+            using (BinaryReader readerB = new BinaryReader(File.OpenRead("..\\..\\..\\..\\MultipathMergeB.txt"), Encoding.UTF8))
+            using (BinaryReader readerC = new BinaryReader(File.OpenRead("..\\..\\..\\..\\MultipathMergeC.txt"), Encoding.UTF8))
+            using (BinaryWriter bw = new BinaryWriter(File.Create(FileInput, 65536)))
+            {
+                string elementA = null, elementB = null, elementC = null;
+                bool pickedA = false, pickedB = false, pickedC = false, endA = false, endB = false, endC = false;
+
+                while (!endA || !endB || !endC || pickedA || pickedC || pickedB)
+                {
+
+                    if (!endA & !pickedA)
+                    {
+                        try
+                        {
+                            elementA = readerA.ReadString();
+
+                            pickedA = true;
+                        }
+                        catch (Exception e)
+                        {
+                            pickedA = false;
+                            endA = true;
+                        }
+                        
+                    }
+
+                    if (!endB & !pickedB)
+                    {
+                        try
+                        {
+                            elementB = readerB.ReadString();
+                            pickedB = true;
+                        }
+                        catch (Exception e)
+                        {
+                            pickedB = false;
+                            endB = true;
+                        }
+                    }
+
+                    if (!endC & !pickedC)
+                    {
+                        try
+                        {
+                            elementC = readerC.ReadString();
+                            pickedC = true;
+                        }
+                        catch (Exception e)
+                        {
+                            pickedC = false;
+                            endC = true;
+                        }
+                    }
+
+                    if (pickedA)
+                    {
+                        if (pickedB)
+                        {
+                            if (pickedC)
+                            {
+                                if (Menu.LeftBeforeRight(elementA , elementB))
+                                {
+                                    if (Menu.LeftBeforeRight(elementA , elementC))
+                                    {
+                                        bw.Write(elementA);
+                                        pickedA = false;
+                                    }
+                                    else
+                                    {
+                                        bw.Write(elementC);
+                                        pickedC = false;
+                                    }
+
+                                }
+                                else
+                                {
+                                    if (Menu.LeftBeforeRight(elementB , elementC))
+                                    {
+                                        bw.Write(elementB);
+                                        pickedB = false;
+                                    }
+                                    else
+                                    {
+                                        bw.Write(elementC);
+                                        pickedC = false;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (Menu.LeftBeforeRight(elementA , elementB))
+                                {
+                                    bw.Write(elementA);
+                                    pickedA = false;
+                                }
+                                else
+                                {
+                                    bw.Write(elementB);
+                                    pickedB = false;
+                                }
+                            }
+
+                        }
+                        else if (pickedC)
+                        {
+                            if (Menu.LeftBeforeRight(elementA , elementC))
+                            {
+                                bw.Write(elementA);
+                                pickedA = false;
+                            }
+                            else
+                            {
+                                bw.Write(elementC);
+                                pickedC = false;
+                            }
+                        }
+                        else
+                        {
+                            bw.Write(elementA);
+                            pickedA = false;
+                        }
+                    }
+                    else if (pickedB)
+                    {
+                        if (pickedC)
+                        {
+                            if (Menu.LeftBeforeRight(elementB , elementC))
+                            {
+                                bw.Write(elementB);
+                                pickedB = false;
+                            }
+                            else
+                            {
+                                bw.Write(elementC);
+                                pickedC = false;
+                            }
+                        }
+                        else
+                        {
+                            bw.Write(elementB);
+                            pickedB = false;
+                        }
+                    }
+                    else if (pickedC)
+                    {
+                        bw.Write(elementC);
+                        pickedC = false;
+                    }
+                }
+            }
         }
     }
 }

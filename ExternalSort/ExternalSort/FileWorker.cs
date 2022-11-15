@@ -14,36 +14,54 @@ namespace ExternalSort
         public static string Filepath;
         public static string SortedFilepath;
 
-        public static string Filepath1 = @"C:\Users\PC\Desktop\C#\ExternalSort\CountryTable.xlsx";
-        public static string SortedFilepath1 = @"C:\Users\PC\Desktop\C#\ExternalSort\SortedCountryTable.xlsx";
-        public static string Filepath2 = @"C:\Users\PC\Desktop\C#\ExternalSort\ChemicalSubstances.xlsx";
-        public static string SortedFilepath2 = @"C:\Users\PC\Desktop\C#\ExternalSort\SortedChemicalSubstances.xlsx";
-        public static string Filepath3 = @"C:\Users\PC\Desktop\C#\ExternalSort\RussianWords.xlsx";
-        public static string SortedFilepath3 = @"C:\Users\PC\Desktop\C#\ExternalSort\SortedRussianWords.xlsx";
+        public static string Filepath0 = @"C:\Users\PC\Desktop\C#\ExternalSort\CountryTable.xlsx";
+        public static string SortedFilepath0 = @"C:\Users\PC\Desktop\C#\ExternalSort\SortedCountryTable.xlsx";
+        public static string Filepath1 = @"C:\Users\PC\Desktop\C#\ExternalSort\ChemicalSubstances.xlsx";
+        public static string SortedFilepath1 = @"C:\Users\PC\Desktop\C#\ExternalSort\SortedChemicalSubstances.xlsx";
+        public static string Filepath2 = @"C:\Users\PC\Desktop\C#\ExternalSort\RussianWords.xlsx";
+        public static string SortedFilepath2 = @"C:\Users\PC\Desktop\C#\ExternalSort\SortedRussianWords.xlsx";
         public static string Extension = ".xlsx";
+
+        public static void FileToSortGeneration(string file, double[] array)
+        {
+            using (BinaryWriter bw = new BinaryWriter(File.Create(file, 256), Encoding.UTF8))
+            {
+                foreach (double elem in array)
+                    bw.Write(elem);
+            }
+        }
+
+        public static void FileToSortGeneration(string file, string[] array)
+        {
+            using (BinaryWriter bw = new BinaryWriter(File.Create(file, 256), Encoding.UTF8))
+            {
+                foreach (string elem in array)
+                    bw.Write(elem);
+            }
+        }
+
+
 
         public static void ChoseFile()
         {
+            int a = Menu.GetNumberOfAnswer("Выберите таблицу для работы",
+                new string[] { "Страны", "Вещества", "Слова" });
 
-            Console.WriteLine("Выберите задание (напишите цифру)");
-            int a = Program.GetNumberOfSortParam(new string[] { "Страны", "Вещества", "Слова" }) + 1;
+            if (a == 0)
+            {
+                Filepath = Filepath0;
+                SortedFilepath = SortedFilepath0;
 
-            if (a == 1)
+            }
+            else if (a == 1)
             {
                 Filepath = Filepath1;
                 SortedFilepath = SortedFilepath1;
-
             }
             else if (a == 2)
-            {
+            {   
                 Filepath = Filepath2;
                 SortedFilepath = SortedFilepath2;
-            }
-            else
-            {
-                //Program.Third = true;
-                Filepath = Filepath3;
-                SortedFilepath = SortedFilepath3;
             }
         }
 
