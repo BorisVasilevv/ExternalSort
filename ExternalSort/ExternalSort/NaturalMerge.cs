@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Text.Unicode;
@@ -9,16 +10,19 @@ namespace ExternalSort
 {
     public class NaturalMerge
     {
+        //List<double> Main = new List<double>();
+        //List<double> MainA = new List<double>();
+        //List<double> MainB = new List<double>();
         public string FileInput { get; set; }
-        private long  segments;
+        private long segments;
 
         public NaturalMerge(string input)
         {
             FileInput = input;
-            
+
         }
 
-        public void Sort()
+        public double[] Sort()
         {
             while (true)
             {
@@ -35,6 +39,18 @@ namespace ExternalSort
                 MergePairs();
             }
             Console.WriteLine();
+            List<double> points = new List<double>();
+            using (BinaryReader reader = new BinaryReader(File.OpenRead(FileInput), Encoding.UTF8))
+            {
+                long length = reader.BaseStream.Length;
+                long position = 0;
+                while (position != length)
+                {
+                    points.Add(reader.ReadDouble());
+                    position += 8;
+                }
+            }
+            return points.ToArray();
         }
 
         private void SplitToFiles() // разделение на 2 вспом. файла
@@ -44,46 +60,51 @@ namespace ExternalSort
             using (BinaryWriter writerA = new BinaryWriter(File.Create("..\\..\\..\\..\\NaturalMergeA.txt", 65536), Encoding.UTF8))
             using (BinaryWriter writerB = new BinaryWriter(File.Create("..\\..\\..\\..\\NaturalMergeB.txt", 65536), Encoding.UTF8))
             {
-                long counter = 0;
+                bool start = false;
                 bool flag = true; // запись либо в 1-ый, либо во 2-ой файл
-                bool endSequence;
                 long length = br.BaseStream.Length;
                 long position = 0;
-                double element = br.ReadDouble();
-                position += 8;
-                double nextElement=0;
-                if (length>8)
+                double element = 0;
+                double nextElement = 0;
+
+                if (length == 8)
                 {
-                    nextElement = br.ReadDouble();
+                    writerA.Write(br.ReadDouble());
+                    return;
                 }
+
                 while (position != length)
                 {
                     // если достигли количества элементов в последовательности -
                     // меняем флаг для след. файла и обнуляем счетчик количества
-                    if (counter == 0 || nextElement >element)
+
+                    if (!start)
                     {
-                        flag = flag;
+                        element = br.ReadDouble();
+                        position += 8;
+                        writerA.Write(element);
+                        start = true;
                     }
-                    else
+
+                    nextElement = br.ReadDouble();
+                    position += 8;
+
+                    if (element > nextElement)
                     {
-                        flag=!flag;
+                        flag = !flag;
                         segments++;
                     }
 
-                    
-
-                    if (counter==0||flag)
+                    if (flag)
                     {
-                        writerA.Write(element);
+                        writerA.Write(nextElement);
                     }
                     else
                     {
-                        writerB.Write(element);
+                        writerB.Write(nextElement);
                     }
-                    counter++;
-                    element=nextElement;
-                    nextElement=br.ReadDouble();
-                    position += 8;
+                    element = nextElement;
+
                 }
             }
         }
@@ -94,49 +115,29 @@ namespace ExternalSort
             using (BinaryReader readerB = new BinaryReader(File.OpenRead("..\\..\\..\\..\\NaturalMergeB.txt"), Encoding.UTF8))
             using (BinaryWriter bw = new BinaryWriter(File.Create(FileInput, 65536)))
             {
-
                 double elementA = 0, elementB = 0;
-                double nextElemA=0, nextElemB=0;
-                bool pickedA = false, pickedB = false, endA = false, endB = false, endSequenceA=false, endSequenceB=false;
+                double nextElemA = 0, nextElemB = 0;
+                bool pickedA = false, pickedB = false, endA = false, endB = false, endSequenceA = false, endSequenceB = false;
                 long lengthA = readerA.BaseStream.Length;
                 long lengthB = readerB.BaseStream.Length;
                 long positionA = 0;
                 long positionB = 0;
                 while (!endA || !endB)
                 {
-                    
-                    if (positionA != lengthA)
+                    endA = positionA == lengthA;
+                    endB= positionB == lengthB;
+                    if(!endA&!pickedA)
                     {
-                        nextElemA = readerA.ReadDouble();
+                        elementA = readerA.ReadDouble();
                         positionA += 8;
-                        if(positionA != lengthA)
-                        {
-                            elementA = nextElemA;
-                            nextElemA=readerA.ReadDouble();
-                            positionA += 8;
-                            if ( !pickedA)
-                            {                               
-                                pickedA = true;
-                            }
-                        }              
-                    }
-                    else
-                    {
-                        endA = true;
+                        pickedA = true;
                     }
 
-                    if (positionB != lengthB)
+                    if (!endB & !pickedB)
                     {
-                        if (/*counterB > 0 &&*/ !pickedB)
-                        {
-                            elementB = readerB.ReadDouble();
-                            positionB += 8;
-                            pickedB = true;
-                        }
-                    }
-                    else
-                    {
-                        endB = true;
+                        elementB = readerB.ReadDouble();
+                        positionB += 8;
+                        pickedB = true;
                     }
 
                     if (pickedA)
@@ -146,33 +147,30 @@ namespace ExternalSort
                             if (elementA < elementB)
                             {
                                 bw.Write(elementA);
-                                //counterA--;
-                                pickedA = false;
+                                pickedA= false;
                             }
                             else
                             {
                                 bw.Write(elementB);
-                                //counterB--;
-                                pickedB = false;
+                                pickedB= false;
                             }
                         }
                         else
                         {
                             bw.Write(elementA);
-                            //counterA--;
                             pickedA = false;
                         }
                     }
                     else if (pickedB)
                     {
                         bw.Write(elementB);
-                        //counterB--;
-                        pickedB = false;
+                        pickedB=false;
                     }
                 }
-
-                
             }
+
+
+
         }
     }
 }
