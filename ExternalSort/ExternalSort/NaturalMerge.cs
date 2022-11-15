@@ -116,13 +116,12 @@ namespace ExternalSort
             using (BinaryWriter bw = new BinaryWriter(File.Create(FileInput, 65536)))
             {
                 double elementA = 0, elementB = 0;
-                double nextElemA = 0, nextElemB = 0;
-                bool pickedA = false, pickedB = false, endA = false, endB = false, endSequenceA = false, endSequenceB = false;
+                bool pickedA = false, pickedB = false, endA = false, endB = false;
                 long lengthA = readerA.BaseStream.Length;
                 long lengthB = readerB.BaseStream.Length;
                 long positionA = 0;
                 long positionB = 0;
-                while (!endA || !endB)
+                while (!endA || !endB || pickedA || pickedB)
                 {
                     endA = positionA == lengthA;
                     endB= positionB == lengthB;
@@ -168,9 +167,6 @@ namespace ExternalSort
                     }
                 }
             }
-
-
-
         }
     }
 }
