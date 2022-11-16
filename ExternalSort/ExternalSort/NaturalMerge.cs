@@ -56,11 +56,6 @@ namespace ExternalSort
             while (true)
             {
                 SplitNumbersToFiles();
-                // суть сортировки заключается в распределении на
-                // отсортированные последовательности.
-                // если после распределения на 2 вспомогательных файла
-                // выясняется, что последовательность одна, значит файл
-                // отсортирован, завершаем работу.
                 if (segments == 1)
                 {
                     break;
@@ -185,7 +180,6 @@ namespace ExternalSort
                     }
                 }
             }
-
         }
 
         private void SplitStringsToFiles()

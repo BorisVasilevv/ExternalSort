@@ -72,7 +72,7 @@ namespace ExternalSort
             return FileWorker.FromFileToNumberArray(FileInput);
         }
 
-        private void SplitNumbersToFiles() // разделение на 2 вспом. файла
+        private void SplitNumbersToFiles() // разделение на 3 вспом. файла
         {
             segments = 1;
             using (BinaryReader br = new BinaryReader(File.OpenRead(FileInput), Encoding.UTF8))
