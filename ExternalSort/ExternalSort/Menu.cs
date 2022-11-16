@@ -50,8 +50,9 @@ namespace ExternalSort
                 if (left.ToLower().ToCharArray()[i] >
                     right.ToLower().ToCharArray()[i]) return false;
             }
-            return left.Length > right.Length;
+            return left.Length < right.Length;
         }
 
+       
     }
 }

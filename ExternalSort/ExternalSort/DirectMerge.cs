@@ -44,23 +44,7 @@ namespace ExternalSort
                 }
                 MergeStringsPairs();
             }
-            Console.WriteLine();
-            List<string> points = new List<string>();
-            using (BinaryReader reader = new BinaryReader(File.OpenRead(FileInput), Encoding.UTF8))
-            {                
-                while (true)
-                {
-                    try
-                    {
-                        points.Add(reader.ReadString());
-                    }
-                    catch (Exception ignoreException)
-                    {
-                        break;
-                    }                                
-                }
-            }
-            return points.ToArray();
+            return FileWorker.FromFileToStringArray(FileInput);
         }
 
 
@@ -69,30 +53,14 @@ namespace ExternalSort
             while (true)
             {
                 SplitNumbersToFiles();
-                // суть сортировки заключается в распределении на
-                // отсортированные последовательности.
-                // если после распределения на 2 вспомогательных файла
-                // выясняется, что последовательность одна, значит файл
-                // отсортирован, завершаем работу.
                 if (segments == 1)
                 {
                     break;
                 }
                 MergeNumbersPairs();
             }
-            Console.WriteLine();
-            List<double> points = new List<double>();
-            using (BinaryReader reader = new BinaryReader(File.OpenRead(FileInput), Encoding.UTF8))
-            {
-                long length = reader.BaseStream.Length;
-                long position = 0;
-                while (position != length)
-                {
-                    points.Add(reader.ReadDouble());
-                    position += 8;
-                }
-            }
-            return points.ToArray();
+
+            return FileWorker.FromFileToNumberArray(FileInput);
         }
 
         private void SplitNumbersToFiles() // разделение на 2 вспом. файла

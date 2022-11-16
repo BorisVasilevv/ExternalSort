@@ -90,8 +90,43 @@ namespace ExternalSort
             return (headlines, list);
         }
 
+        public static double[] FromFileToNumberArray(string file)
+        {
+            List<double> points = new List<double>();
+            using (BinaryReader reader = new BinaryReader(File.OpenRead(file), Encoding.UTF8))
+            {
+                long length = reader.BaseStream.Length;
+                long position = 0;
+                while (position != length)
+                {
+                    points.Add(reader.ReadDouble());
+                    position += 8;
+                }
+            }
+            return points.ToArray();
+        }
 
-        public static void WriteToFile(string[] headlines, string[,] data)
+        public static string[] FromFileToStringArray(string file)
+        {
+            List<string> points = new List<string>();
+            using (BinaryReader reader = new BinaryReader(File.OpenRead(file), Encoding.UTF8))
+            {
+                while (true)
+                {
+                    try
+                    {
+                        points.Add(reader.ReadString());
+                    }
+                    catch (Exception ignoreException)
+                    {
+                        break;
+                    }
+                }
+            }
+            return points.ToArray();
+        }
+
+public static void WriteToFile(string[] headlines, string[,] data)
         {
             StringBuilder sb = new StringBuilder();
 
