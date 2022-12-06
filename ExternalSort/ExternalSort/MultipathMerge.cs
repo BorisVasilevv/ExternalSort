@@ -45,6 +45,8 @@ namespace ExternalSort
                 // отсортирован, завершаем работу.
                 if (segments == 1)
                 {
+                    MergeStringsPairs();
+                    Console.WriteLine("Данные отсортированы");
                     break;
                 }
                 MergeStringsPairs();
@@ -64,6 +66,8 @@ namespace ExternalSort
                 // отсортирован, завершаем работу.
                 if (segments == 1)
                 {
+                    MergeNumbersPairs();
+                    Console.WriteLine("Данные отсортированы");
                     break;
                 }
                 MergeNumbersPairs();
@@ -89,43 +93,76 @@ namespace ExternalSort
 
                 if (length == 8)
                 {
-                    writerA.Write(br.ReadDouble());
+                    double element1 = br.ReadDouble();
+                    Console.WriteLine($"Записываем {element1} в первый файл");
+                    writerA.Write(element1);
                     return;
                 }
 
+                Console.WriteLine($"Записываем поочерёдно уже отсортированные массивы чисел в файл");
                 while (position != length)
                 {
-                    
                     if (!start)
                     {
+
                         element = br.ReadDouble();
+                        Console.WriteLine($"Читаем из основного файла: {element}");
                         position += 8;
+                        Console.WriteLine($"Записываем {element} в первый файл");
                         writerA.Write(element);
                         start = true;
                     }
 
+
                     nextElement = br.ReadDouble();
+                    Console.WriteLine($"Читаем из основного файла: {nextElement}");
                     position += 8;
 
+
+                    Console.WriteLine($"Сравниваем {element} и {nextElement}");
                     if (element > nextElement)
                     {
-                        if(fileNumber == FileToWrite.A) fileNumber = FileToWrite.B;
-                        else if (fileNumber == FileToWrite.B) fileNumber = FileToWrite.C;
-                        else if (fileNumber == FileToWrite.C) fileNumber = FileToWrite.A;
+                        Console.WriteLine($"Так как {element} > {nextElement} отсортированный массив прервался");
+                        if (fileNumber == FileToWrite.A)
+                        {
+                            Console.WriteLine($"Тепель будем писать во второй файл");
+                            writerA.Write(double.MaxValue);
+                            fileNumber = FileToWrite.B;
+                        }
+                        else if (fileNumber == FileToWrite.B)
+                        {
+                            Console.WriteLine($"Тепель будем писать в третий файл");
+                            writerB.Write(double.MaxValue);
+                            fileNumber = FileToWrite.C;
+                        }
+                        else if (fileNumber == FileToWrite.C)
+                        {
+                            Console.WriteLine($"Тепель будем писать в первый файл");
+                            writerC.Write(double.MaxValue);
+                            fileNumber = FileToWrite.A;
+                        }
+
 
                         segments++;
                     }
-
-                    if (fileNumber==FileToWrite.A)
+                    else
                     {
+                        Console.WriteLine($"Так как {element} < {nextElement} продолжаем записывать в тот же файл");
+                    }
+
+                    if (fileNumber == FileToWrite.A)
+                    {
+                        Console.WriteLine($"Записываем {nextElement} в первый файл");
                         writerA.Write(nextElement);
                     }
                     else if (fileNumber == FileToWrite.B)
                     {
+                        Console.WriteLine($"Записываем {nextElement} во второй файл");
                         writerB.Write(nextElement);
                     }
                     else if (fileNumber == FileToWrite.C)
                     {
+                        Console.WriteLine($"Записываем {nextElement} в третий файл");
                         writerC.Write(nextElement);
                     }
                     element = nextElement;
@@ -148,31 +185,110 @@ namespace ExternalSort
                 long positionA = 0;
                 long positionB = 0;
                 long positionC = 0;
-                while (!endA || !endB|| !endC||pickedA||pickedC||pickedB)
+
+                bool endPartA = false;
+                bool endPartB = false;
+                bool endPartC = false;
+
+                while (!endA || !endB || !endC || pickedA || pickedC || pickedB)
                 {
                     endA = positionA == lengthA;
                     endB = positionB == lengthB;
                     endC = positionC == lengthC;
-                    if (!endA & !pickedA)
+
+
+                    if (endPartA && endPartB && endPartC)
+                    {
+                        endPartA = false;
+                        endPartB = false;
+                        endPartC = false;
+                    }
+                    else if (endPartB && endA && endPartC)
+                    {
+                        endPartA = true;
+                        endPartB = false;
+                        endPartC = false;
+                    }
+                    else if (endPartB && endA && endC)
+                    {
+                        endPartA = true;
+                        endPartB = false;
+                        endPartC = true;
+                    }
+                    else if (endPartB && endPartA && endC)
+                    {
+                        endPartA = false;
+                        endPartB = false;
+                        endPartC = true;
+                    }
+                    else if (endPartA && endB && endPartC)
+                    {
+                        endPartA = false;
+                        endPartB = true;
+                        endPartC = false;
+                    }
+                    else if (endPartA && endB && endC)
+                    {
+                        endPartA = false;
+                        endPartB = true;
+                        endPartC = true;
+                    }
+                    else if (endPartC && endB && endA)
+                    {
+                        endPartA = true;
+                        endPartB = true;
+                        endPartC = false;
+                    }
+
+                    if (!endA && !pickedA && !endPartA)
                     {
                         elementA = readerA.ReadDouble();
+                        if (elementA == double.MaxValue)
+                        {
+                            Console.WriteLine("Последовательность в 1 файле закончилась");
+                            endPartA = true;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Читаем из первого файла: {elementA}");
+                            pickedA = true;
+                        }
                         positionA += 8;
-                        pickedA = true;
                     }
 
-                    if (!endB & !pickedB)
+                    if (!endB & !pickedB & !endPartB)
                     {
                         elementB = readerB.ReadDouble();
+                        if (elementB == double.MaxValue)
+                        {
+                            Console.WriteLine("Последовательность во 2 файле закончилась");
+                            endPartB = true;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Читаем из второго файла: {elementB}");
+                            pickedB = true;
+                        }
                         positionB += 8;
-                        pickedB = true;
                     }
 
-                    if (!endC & !pickedC)
+                    if (!endC & !pickedC & !endPartC)
                     {
                         elementC = readerC.ReadDouble();
+                        if (elementC == double.MaxValue)
+                        {
+                            Console.WriteLine("Последовательность в 3 файле закончилась");
+                            endPartC = true;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Читаем из третьего файла: {elementC}");
+                            pickedC = true;
+                        }
                         positionC += 8;
-                        pickedC = true;
                     }
+
+
 
                     if (pickedA)
                     {
@@ -180,15 +296,19 @@ namespace ExternalSort
                         {
                             if (pickedC)
                             {
+                                Console.WriteLine($"Сравниваем {elementA} и {elementB}");
                                 if (elementA < elementB)
                                 {
+                                    Console.WriteLine($"Сравниваем {elementA} и {elementC}");
                                     if (elementA < elementC)
                                     {
+                                        Console.WriteLine($"Наименьший элемент {elementA} его и запишем в основной файл");
                                         bw.Write(elementA);
                                         pickedA = false;
                                     }
                                     else
                                     {
+                                        Console.WriteLine($"Наименьший элемент {elementC} его и запишем в основной файл");
                                         bw.Write(elementC);
                                         pickedC = false;
                                     }
@@ -196,13 +316,16 @@ namespace ExternalSort
                                 }
                                 else
                                 {
+                                    Console.WriteLine($"Сравниваем {elementB} и {elementC}");
                                     if (elementB < elementC)
                                     {
+                                        Console.WriteLine($"Наименьший элемент {elementB} его и запишем в основной файл");
                                         bw.Write(elementB);
                                         pickedB = false;
                                     }
                                     else
                                     {
+                                        Console.WriteLine($"Наименьший элемент {elementC} его и запишем в основной файл");
                                         bw.Write(elementC);
                                         pickedC = false;
                                     }
@@ -212,32 +335,37 @@ namespace ExternalSort
                             {
                                 if (elementA < elementB)
                                 {
+                                    Console.WriteLine($"Наименьший элемент {elementA} его и запишем в основной файл");
                                     bw.Write(elementA);
                                     pickedA = false;
                                 }
                                 else
                                 {
+                                    Console.WriteLine($"Наименьший элемент {elementB} его и запишем в основной файл");
                                     bw.Write(elementB);
                                     pickedB = false;
                                 }
                             }
-                            
+
                         }
                         else if (pickedC)
                         {
                             if (elementA < elementC)
                             {
+                                Console.WriteLine($"Наименьший элемент {elementA} его и запишем в основной файл");
                                 bw.Write(elementA);
                                 pickedA = false;
                             }
                             else
                             {
+                                Console.WriteLine($"Наименьший элемент {elementC} его и запишем в основной файл");
                                 bw.Write(elementC);
                                 pickedC = false;
                             }
                         }
                         else
                         {
+                            Console.WriteLine($"Наименьший элемент {elementA} его и запишем в основной файл");
                             bw.Write(elementA);
                             pickedA = false;
                         }
@@ -246,25 +374,30 @@ namespace ExternalSort
                     {
                         if (pickedC)
                         {
+                            Console.WriteLine($"Сравниваем {elementB} и {elementC}");
                             if (elementB < elementC)
                             {
+                                Console.WriteLine($"Наименьший элемент {elementB} его и запишем в основной файл");
                                 bw.Write(elementB);
                                 pickedB = false;
                             }
                             else
                             {
+                                Console.WriteLine($"Наименьший элемент {elementC} его и запишем в основной файл");
                                 bw.Write(elementC);
                                 pickedC = false;
                             }
                         }
                         else
                         {
+                            Console.WriteLine($"Наименьший элемент {elementB} его и запишем в основной файл");
                             bw.Write(elementB);
                             pickedB = false;
                         }
                     }
                     else if (pickedC)
                     {
+                        Console.WriteLine($"Наименьший элемент {elementC} его и запишем в основной файл");
                         bw.Write(elementC);
                         pickedC = false;
                     }
@@ -294,7 +427,9 @@ namespace ExternalSort
                         try
                         {
                             element = br.ReadString();
+                            Console.WriteLine($"Читаем из основного файла: {element}");
                             writerA.Write(element);
+                            Console.WriteLine($"Записываем {element} в первый файл");
                             start = true;
                         }
                         catch
@@ -302,12 +437,12 @@ namespace ExternalSort
                             end = true;
                             break;
                         }
-                        
                     }
 
                     try
                     {
                         nextElement = br.ReadString();
+                        Console.WriteLine($"Читаем из основного файла: {nextElement}");
                     }
                     catch
                     {
@@ -316,25 +451,45 @@ namespace ExternalSort
                     }
 
 
-                    if (!Menu.LeftBeforeRight(element , nextElement))
+                    if (!Menu.LeftBeforeRight(element, nextElement))
                     {
-                        if (fileNumber == FileToWrite.A) fileNumber = FileToWrite.B;
-                        else if (fileNumber == FileToWrite.B) fileNumber = FileToWrite.C;
-                        else if (fileNumber == FileToWrite.C) fileNumber = FileToWrite.A;
+                        Console.WriteLine($"Так как {element} позднее по алфавиту, чем {nextElement} отсортированный массив прервался будем писать в другой файл");
+                        if (fileNumber == FileToWrite.A)
+                        {
+                            writerA.Write(double.MaxValue.ToString());
+                            fileNumber = FileToWrite.B;
+                        }
+                        else if (fileNumber == FileToWrite.B)
+                        {
+                            writerB.Write(double.MaxValue.ToString());
+                            fileNumber = FileToWrite.C;
+                        }
+                        else if (fileNumber == FileToWrite.C)
+                        {
+                            writerC.Write(double.MaxValue.ToString());
+                            fileNumber = FileToWrite.A;
+                        }
 
                         segments++;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Так как {element} раньше по алфовиту, чем {nextElement} отсортированный массив не прервался будем писать в этот же файл");
                     }
 
                     if (fileNumber == FileToWrite.A)
                     {
+                        Console.WriteLine($"Записываем {nextElement} в первый файл");
                         writerA.Write(nextElement);
                     }
                     else if (fileNumber == FileToWrite.B)
                     {
+                        Console.WriteLine($"Записываем {nextElement} во второй файл");
                         writerB.Write(nextElement);
                     }
                     else if (fileNumber == FileToWrite.C)
                     {
+                        Console.WriteLine($"Записываем {nextElement} в третий файл");
                         writerC.Write(nextElement);
                     }
                     element = nextElement;
@@ -352,50 +507,143 @@ namespace ExternalSort
                 string elementA = null, elementB = null, elementC = null;
                 bool pickedA = false, pickedB = false, pickedC = false, endA = false, endB = false, endC = false;
 
+                bool endPartA = false, endPartB = false, endPartC = false;
+                Console.WriteLine($"Записываем обратно в один файл");
                 while (!endA || !endB || !endC || pickedA || pickedC || pickedB)
                 {
+                    if(endA) endPartA=true;
+                    if (endB) endPartB = true;
+                    if (endC) endPartC = true;
 
-                    if (!endA & !pickedA)
+                    if (endPartA && endPartB && endPartC)
+                    {
+                        endPartA = false;
+                        endPartB = false;
+                        endPartC = false;
+                    }
+                    else if (endPartB && endA && endPartC)
+                    {
+                        endPartA = true;
+                        endPartB = false;
+                        endPartC = false;
+                    }
+                    else if (endPartB && endA && endC)
+                    {
+                        endPartA = true;
+                        endPartB = false;
+                        endPartC = true;
+                    }
+                    else if (endPartB && endPartA && endC)
+                    {
+                        endPartA = false;
+                        endPartB = false;
+                        endPartC = true;
+                    }
+                    else if (endPartA && endB && endPartC)
+                    {
+                        endPartA = false;
+                        endPartB = true;
+                        endPartC = false;
+                    }
+                    else if (endPartA && endB && endC)
+                    {
+                        endPartA = false;
+                        endPartB = true;
+                        endPartC = true;
+                    }
+                    else if (endPartC && endB && endA)
+                    {
+                        endPartA = true;
+                        endPartB = true;
+                        endPartC = false;
+                    }
+
+                    if (!endA && !pickedA && !endPartA)
                     {
                         try
                         {
                             elementA = readerA.ReadString();
-
-                            pickedA = true;
+                            double a;
+                            if (double.TryParse(elementA, out a))
+                            {
+                                if (a == double.MaxValue)
+                                {
+                                    Console.WriteLine("Последовательность в 1 файле закончилась");
+                                    endPartA = true;
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Читаем из первого файла: {elementA}");
+                                pickedA = true;
+                            }
                         }
-                        catch (Exception e)
+                        catch
                         {
-                            pickedA = false;
+                            Console.WriteLine("1 файл закончился");
                             endA = true;
+                            pickedA = false;
+                            endPartA = true;
                         }
-                        
                     }
 
-                    if (!endB & !pickedB)
+                    if (!endB && !pickedB && !endPartB)
                     {
                         try
                         {
                             elementB = readerB.ReadString();
-                            pickedB = true;
+                            double a;
+                            if (double.TryParse(elementB, out a))
+                            {
+                                if (a == double.MaxValue)
+                                {
+                                    Console.WriteLine("Последовательность во 2 файле закончилась");
+                                    endPartB = true;
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Читаем из второго файла: {elementB}");
+                                pickedB = true;
+                            }
+
                         }
-                        catch (Exception e)
+                        catch
                         {
-                            pickedB = false;
+                            Console.WriteLine("2 файл закончился");
                             endB = true;
+                            pickedB = false;
+                            endPartB = true;
                         }
                     }
 
-                    if (!endC & !pickedC)
+                    if (!endC && !pickedC && !endPartC)
                     {
                         try
                         {
                             elementC = readerC.ReadString();
-                            pickedC = true;
+                            double a;
+                            if (double.TryParse(elementC, out a))
+                            {
+                                if (a == double.MaxValue)
+                                {
+                                    Console.WriteLine("Последовательность в 3 файле закончилась");
+                                    endPartC = true;
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Читаем из третьего файла: {elementC}");
+                                pickedC = true;
+                            }
+
                         }
-                        catch (Exception e)
+                        catch
                         {
-                            pickedC = false;
+                            Console.WriteLine("3 файл закончился");
                             endC = true;
+                            pickedC = false;
+                            endPartC = true;
                         }
                     }
 
@@ -405,15 +653,19 @@ namespace ExternalSort
                         {
                             if (pickedC)
                             {
-                                if (Menu.LeftBeforeRight(elementA , elementB))
+                                Console.WriteLine($"Сравниваем {elementA} и {elementB}");
+                                if (Menu.LeftBeforeRight(elementA, elementB))
                                 {
-                                    if (Menu.LeftBeforeRight(elementA , elementC))
+                                    Console.WriteLine($"Сравниваем {elementA} и {elementC}");
+                                    if (Menu.LeftBeforeRight(elementA, elementC))
                                     {
+                                        Console.WriteLine($"Так как строка {elementA} по алфавиту раньше, других записываем в основной файл {elementA}");
                                         bw.Write(elementA);
                                         pickedA = false;
                                     }
                                     else
                                     {
+                                        Console.WriteLine($"Так как строка {elementC} по алфавиту раньше, других записываем в основной файл {elementC}");
                                         bw.Write(elementC);
                                         pickedC = false;
                                     }
@@ -421,13 +673,16 @@ namespace ExternalSort
                                 }
                                 else
                                 {
-                                    if (Menu.LeftBeforeRight(elementB , elementC))
+                                    Console.WriteLine($"Сравниваем {elementB} и {elementC}");
+                                    if (Menu.LeftBeforeRight(elementB, elementC))
                                     {
+                                        Console.WriteLine($"Так как строка {elementB} по алфавиту раньше, других записываем в основной файл {elementB}");
                                         bw.Write(elementB);
                                         pickedB = false;
                                     }
                                     else
                                     {
+                                        Console.WriteLine($"Так как строка {elementC} по алфавиту раньше, других записываем в основной файл {elementC}");
                                         bw.Write(elementC);
                                         pickedC = false;
                                     }
@@ -435,13 +690,16 @@ namespace ExternalSort
                             }
                             else
                             {
-                                if (Menu.LeftBeforeRight(elementA , elementB))
+                                Console.WriteLine($"Сравниваем {elementA} и {elementB}");
+                                if (Menu.LeftBeforeRight(elementA, elementB))
                                 {
+                                    Console.WriteLine($"Так как строка {elementA} по алфавиту раньше, других записываем в основной файл {elementA}");
                                     bw.Write(elementA);
                                     pickedA = false;
                                 }
                                 else
                                 {
+                                    Console.WriteLine($"Так как строка {elementB} по алфавиту раньше, других записываем в основной файл {elementB}");
                                     bw.Write(elementB);
                                     pickedB = false;
                                 }
@@ -450,19 +708,24 @@ namespace ExternalSort
                         }
                         else if (pickedC)
                         {
-                            if (Menu.LeftBeforeRight(elementA , elementC))
+                            Console.WriteLine($"Сравниваем {elementA} и {elementC}");
+                            if (Menu.LeftBeforeRight(elementA, elementC))
                             {
+                                Console.WriteLine($"Так как строка {elementA} по алфавиту раньше, других записываем в основной файл {elementA}");
+
                                 bw.Write(elementA);
                                 pickedA = false;
                             }
                             else
                             {
+                                Console.WriteLine($"Так как строка {elementC} по алфавиту раньше, других записываем в основной файл {elementC}");
                                 bw.Write(elementC);
                                 pickedC = false;
                             }
                         }
                         else
                         {
+                            Console.WriteLine($"Так как строка {elementA} по алфавиту раньше, других записываем в основной файл {elementA}");
                             bw.Write(elementA);
                             pickedA = false;
                         }
@@ -471,25 +734,30 @@ namespace ExternalSort
                     {
                         if (pickedC)
                         {
-                            if (Menu.LeftBeforeRight(elementB , elementC))
+                            Console.WriteLine($"Сравниваем {elementB} и {elementC}");
+                            if (Menu.LeftBeforeRight(elementB, elementC))
                             {
+                                Console.WriteLine($"Так как строка {elementB} по алфавиту раньше, других записываем в основной файл {elementB}");
                                 bw.Write(elementB);
                                 pickedB = false;
                             }
                             else
                             {
+                                Console.WriteLine($"Так как строка {elementC} по алфавиту раньше, других записываем в основной файл {elementC}");
                                 bw.Write(elementC);
                                 pickedC = false;
                             }
                         }
                         else
                         {
+                            Console.WriteLine($"Так как строка {elementB} по алфавиту раньше, других записываем в основной файл {elementB}");
                             bw.Write(elementB);
                             pickedB = false;
                         }
                     }
                     else if (pickedC)
                     {
+                        Console.WriteLine($"Так как строка {elementC} по алфавиту раньше, других записываем в основной файл {elementC}");
                         bw.Write(elementC);
                         pickedC = false;
                     }

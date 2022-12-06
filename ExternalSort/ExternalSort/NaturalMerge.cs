@@ -44,6 +44,8 @@ namespace ExternalSort
                 // отсортирован, завершаем работу.
                 if (segments == 1)
                 {
+                    MergeStringsPairs();
+                    Console.WriteLine("Данные отсортированы");
                     break;
                 }
                 MergeStringsPairs();
@@ -58,6 +60,8 @@ namespace ExternalSort
                 SplitNumbersToFiles();
                 if (segments == 1)
                 {
+                    MergeNumbersPairs();
+                    Console.WriteLine("Данные отсортированы");
                     break;
                 }
                 MergeNumbersPairs();
@@ -82,10 +86,13 @@ namespace ExternalSort
 
                 if (length == 8)
                 {
-                    writerA.Write(br.ReadDouble());
+                    double element1 = br.ReadDouble();
+                    Console.WriteLine($"Записываем {element1} в первый файл");
+                    writerA.Write(element1);
                     return;
                 }
 
+                Console.WriteLine($"Записываем поочерёдно уже отсортированные массивы чисел в файл");
                 while (position != length)
                 {
                     // если достигли количества элементов в последовательности -
@@ -94,26 +101,40 @@ namespace ExternalSort
                     if (!start)
                     {
                         element = br.ReadDouble();
+                        Console.WriteLine($"Читаем из основного файла: {element}");
                         position += 8;
                         writerA.Write(element);
+                        Console.WriteLine($"Записываем {element} в первый файл");
                         start = true;
                     }
 
                     nextElement = br.ReadDouble();
                     position += 8;
+                    Console.WriteLine($"Читаем из основного файла: {nextElement}");
 
+
+                    Console.WriteLine($"Сравниваем {element} и {nextElement}");
                     if (element > nextElement)
                     {
+                        Console.WriteLine($"Так как {element} > {nextElement} отсортированный массив прервался будем писать в другой файл");
+                        if (flag) writerA.Write(double.MaxValue);
+                        else writerB.Write(double.MaxValue);
                         flag = !flag;
                         segments++;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Так как {element} < {nextElement} отсортированный массив не прервался будем писать в этот же файл");
                     }
 
                     if (flag)
                     {
+                        Console.WriteLine($"Записываем {nextElement} в первый файл");
                         writerA.Write(nextElement);
                     }
                     else
                     {
+                        Console.WriteLine($"Записываем {nextElement} во второй файл");
                         writerB.Write(nextElement);
                     }
                     element = nextElement;
@@ -134,51 +155,95 @@ namespace ExternalSort
                 long lengthB = readerB.BaseStream.Length;
                 long positionA = 0;
                 long positionB = 0;
+
+                bool endPartA = false;
+                bool endPartB = false;
+                Console.WriteLine($"Записываем обратно в один файл");
                 while (!endA || !endB || pickedA || pickedB)
                 {
                     endA = positionA == lengthA;
                     endB = positionB == lengthB;
-                    if (!endA & !pickedA)
+                    if (endPartA && endPartB)
                     {
-                        elementA = readerA.ReadDouble();
-                        positionA += 8;
-                        pickedA = true;
+                        endPartA = false;
+                        endPartB = false;
+                    }
+                    else if (endPartB && endA)
+                    {
+                        endPartB = false;
+                    }
+                    else if (endPartA && endB)
+                    {
+                        endPartA = false;
                     }
 
-                    if (!endB & !pickedB)
+                    if (!endA && !pickedA && !endPartA)
+                    {
+                        elementA = readerA.ReadDouble();
+                        if (elementA == double.MaxValue)
+                        {
+                            Console.WriteLine("Последовательность в 1 файле закончилась");
+                            endPartA = true;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Читаем из первого файла: {elementA}");
+                            pickedA = true;
+                        }
+                        positionA += 8;
+                    }
+
+                    if (!endB & !pickedB & !endPartB)
                     {
                         elementB = readerB.ReadDouble();
+                        if (elementB == double.MaxValue)
+                        {
+                            Console.WriteLine("Последовательность во 2 файле закончилась");
+                            endPartB = true;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Читаем из второго файла: {elementB}");
+                            pickedB = true;
+                        }
                         positionB += 8;
-                        pickedB = true;
                     }
+
+
 
                     if (pickedA)
                     {
                         if (pickedB)
                         {
+                            Console.WriteLine($"Сравниваем {elementA} и {elementB}");
                             if (elementA < elementB)
                             {
+                                Console.WriteLine($"Так как {elementA} < {elementB} записываем в основной файл {elementA}");
                                 bw.Write(elementA);
                                 pickedA = false;
                             }
                             else
                             {
+                                Console.WriteLine($"Так как {elementB} < {elementA} записываем в основной файл {elementB}");
                                 bw.Write(elementB);
                                 pickedB = false;
                             }
                         }
                         else
                         {
+                            Console.WriteLine($"Так как был последовательноть из второго файла кончилась записываем в основной файл {elementA}");
                             bw.Write(elementA);
                             pickedA = false;
                         }
                     }
                     else if (pickedB)
                     {
+                        Console.WriteLine($"Так как был последовательноть из первого файла кончилась записываем в основной файл {elementB}");
                         bw.Write(elementB);
                         pickedB = false;
                     }
                 }
+
             }
         }
 
@@ -206,7 +271,9 @@ namespace ExternalSort
                         try
                         {
                             element = br.ReadString();
+                            Console.WriteLine($"Читаем из основного файла: {element}");
                             writerA.Write(element);
+                            Console.WriteLine($"Записываем {element} в первый файл");
                             start = true;
                         }
                         catch (Exception e)
@@ -218,7 +285,9 @@ namespace ExternalSort
 
                     try
                     {
+                        
                         nextElement = br.ReadString();
+                        Console.WriteLine($"Читаем из основного файла: {nextElement}");
                     }
                     catch (Exception e)
                     {
@@ -229,16 +298,25 @@ namespace ExternalSort
 
                     if (!Menu.LeftBeforeRight(element, nextElement))
                     {
+                        Console.WriteLine($"Так как {element} позднее по алфавиту, чем {nextElement} отсортированный массив прервался будем писать в другой файл");
+                        if (flag) writerA.Write(double.MaxValue.ToString());
+                        else writerB.Write(double.MaxValue.ToString());
                         flag = !flag;
                         segments++;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Так как {element} раньше по алфовиту, чем {nextElement} отсортированный массив не прервался будем писать в этот же файл");
                     }
 
                     if (flag)
                     {
+                        Console.WriteLine($"Записываем {nextElement} в первый файл");
                         writerA.Write(nextElement);
                     }
                     else
                     {
+                        Console.WriteLine($"Записываем {nextElement} во второй файл");
                         writerB.Write(nextElement);
                     }
                     element = nextElement;
@@ -256,63 +334,116 @@ namespace ExternalSort
                 string elementA = null, elementB = null;
                 bool pickedA = false, pickedB = false, endA = false, endB = false;
 
-
-                while (!endA || !endB || pickedA || pickedB)
+                bool endPartA=false, endPartB=false;
+                Console.WriteLine($"Записываем обратно в один файл");
+                while (!endA || !endB || pickedA || pickedB||!endPartA||!endPartB)
                 {
+                    if (endPartA && endPartB &&!(endA || endB))
+                    {
+                        endPartA = false;
+                        endPartB = false;
+                    }
+                    else if (endPartB && endA)
+                    {
+                        endPartB = false;
+                    }
+                    else if (endPartA && endB)
+                    {
+                        endPartA = false;
+                    }
 
-                    if (!endA & !pickedA)
+
+                    if (!endA && !pickedA && !endPartA)
                     {
                         try
                         {
                             elementA = readerA.ReadString();
-                            pickedA = true;
+                            double a;
+                            if(double.TryParse(elementA, out a))
+                            {
+                                if (a == double.MaxValue)
+                                {
+                                    Console.WriteLine("Последовательность в 1 файле закончилась");
+                                    endPartA = true;
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Читаем из первого файла: {elementA}");
+                                pickedA = true;
+                            }
+                                                                   
                         }
                         catch
                         {
+                            Console.WriteLine("1 файл закончился");
                             endA = true;
                             pickedA = false;
+                            endPartA = true;
 
                         }
 
                     }
 
-                    if (!endB & !pickedB)
+                    if (!endB && !pickedB && !endPartB)
                     {
                         try
                         {
                             elementB = readerB.ReadString();
-                            pickedB = true;
+                            double a;
+                            if (double.TryParse(elementB, out a))
+                            {
+                                if (a == double.MaxValue)
+                                {
+                                    Console.WriteLine("Последовательность во 2 файле закончилась");
+                                    endPartB = true;
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Читаем из второго файла: {elementB}");
+                                pickedB = true;
+                            }
+
                         }
                         catch
                         {
+                            Console.WriteLine("2 файл закончился");
                             endB = true;
-                            pickedB=false;
+                            pickedB = false;
+                            endPartB = true;
                         }
                     }
+
 
                     if (pickedA)
                     {
                         if (pickedB)
                         {
-                            if (Menu.LeftBeforeRight(elementA , elementB))
+                            Console.WriteLine($"Сравниваем {elementA} и {elementB}");
+                            if (Menu.LeftBeforeRight(elementA, elementB))
                             {
+                                Console.WriteLine($"Так как {elementA} по алфавиту раньше, чем {elementB} записываем в основной файл {elementA}");
                                 bw.Write(elementA);
                                 pickedA = false;
                             }
                             else
                             {
+                                Console.WriteLine($"Так как {elementB} по алфавиту раньше, чем {elementA} записываем в основной файл {elementB}");
                                 bw.Write(elementB);
                                 pickedB = false;
                             }
                         }
                         else
                         {
+                            Console.WriteLine($"Так как был последовательноть из второго файла кончилась записываем в основной файл {elementA}");
                             bw.Write(elementA);
                             pickedA = false;
                         }
                     }
                     else if (pickedB)
                     {
+                        Console.WriteLine($"Так как был последовательноть из первого файла кончилась записываем в основной файл {elementB}");
                         bw.Write(elementB);
                         pickedB = false;
                     }

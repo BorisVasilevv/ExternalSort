@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Unicode;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace ExternalSort
 {
@@ -40,6 +41,8 @@ namespace ExternalSort
                 // отсортирован, завершаем работу.
                 if (segments == 1)
                 {
+                    MergeStringsPairs();
+                    Console.WriteLine("Данные отсортированы");
                     break;
                 }
                 MergeStringsPairs();
@@ -52,11 +55,15 @@ namespace ExternalSort
         {
             while (true)
             {
+                Console.WriteLine("Разбиваем из одного файла в два");
                 SplitNumbersToFiles();
                 if (segments == 1)
                 {
+                    MergeNumbersPairs();
+                    Console.WriteLine("Данные отсортированы");
                     break;
                 }
+                Console.WriteLine("Производим слияние из двух файлов в один");
                 MergeNumbersPairs();
             }
 
@@ -75,6 +82,7 @@ namespace ExternalSort
 
                 long length = br.BaseStream.Length;
                 long position = 0;
+                Console.WriteLine($"Записываем поочерёдно серии по {iterations} чисел в файл");
                 while (position != length)
                 {
                     // если достигли количества элементов в последовательности -
@@ -87,17 +95,22 @@ namespace ExternalSort
                     }
 
                     double element = br.ReadDouble();
+
                     position += 8;
                     if (flag)
                     {
+                        Console.WriteLine($"Записываем элемент {element} в первый файл");
                         writerA.Write(element);
                     }
                     else
                     {
+                        Console.WriteLine($"Записываем элемент {element} во второй файл");
                         writerB.Write(element);
                     }
                     counter++;
                 }
+
+                Console.WriteLine("Последовательность закончилась");
             }
         }
 
@@ -126,7 +139,9 @@ namespace ExternalSort
                     {
                         if (counterA > 0 && !pickedA)
                         {
+                            
                             elementA = readerA.ReadDouble();
+                            Console.WriteLine($"Считываем элемент из первого файла: {elementA}");
                             positionA += 8;
                             pickedA = true;
                         }
@@ -140,7 +155,9 @@ namespace ExternalSort
                     {
                         if (counterB > 0 && !pickedB)
                         {
+                            
                             elementB = readerB.ReadDouble();
+                            Console.WriteLine($"Считываем элемент из второго файла: {elementB}");
                             positionB += 8;
                             pickedB = true;
                         }
@@ -154,14 +171,17 @@ namespace ExternalSort
                     {
                         if (pickedB)
                         {
+                            Console.WriteLine($"Сравниваем {elementA} и {elementB}");
                             if (elementA < elementB)
                             {
                                 bw.Write(elementA);
+                                Console.WriteLine($"Так как {elementA} < {elementB} записываем в файл {elementA}");
                                 counterA--;
                                 pickedA = false;
                             }
                             else
                             {
+                                Console.WriteLine($"Так как {elementB} < {elementA} записываем в файл {elementB}");
                                 bw.Write(elementB);
                                 counterB--;
                                 pickedB = false;
@@ -169,6 +189,7 @@ namespace ExternalSort
                         }
                         else
                         {
+                            Console.WriteLine($"Так как был последовательноть из второго файла кончилась записываем в файл {elementA}");
                             bw.Write(elementA);
                             counterA--;
                             pickedA = false;
@@ -177,12 +198,14 @@ namespace ExternalSort
                     else if (pickedB)
                     {
                         bw.Write(elementB);
+                        Console.WriteLine($"Так как был последовательноть из первого файла кончилась записываем в файл {elementB}");
                         counterB--;
                         pickedB = false;
                     }
                 }
 
-                iterations *= 2; // увеличиваем размер серии в 2 раза
+                iterations *= 2; //
+                Console.WriteLine("Увеличиваем размер серии в 2 раза");
             }
         }
 
@@ -196,6 +219,7 @@ namespace ExternalSort
                 long counter = 0;
                 bool flag = true; // запись либо в 1-ый, либо во 2-ой файл
                 bool readerEmpty = false;
+                Console.WriteLine($"Записываем поочерёдно серии по {iterations} строк в файл");
                 while (!readerEmpty)
                 {
                     // если достигли количества элементов в последовательности -
@@ -221,14 +245,18 @@ namespace ExternalSort
 
                     if (flag)
                     {
+                        Console.WriteLine($"Записываем элемент {element} в первый файл");
                         writerA.Write(element);
                     }
                     else
                     {
+                        Console.WriteLine($"Записываем элемент {element} во второй файл");
                         writerB.Write(element);
                     }
                     counter++;
                 }
+
+                Console.WriteLine("Последовательность закончилась");
             }
         }
 
@@ -251,11 +279,12 @@ namespace ExternalSort
 
                     if (!endA)
                     {
-                        if (counterA > 0 && !pickedA)
+                        if (!pickedA)
                         {
                             try
                             {
                                 elementA = readerA.ReadString();
+                                Console.WriteLine($"Считываем элемент из первого файла: {elementA}");
                                 pickedA = true;
                             }
                             catch (Exception ignore)
@@ -264,16 +293,18 @@ namespace ExternalSort
                                 pickedA= false;
                             }
                         }
+
                     }
                     
 
                     if (!endB)
                     {
-                        if (counterB > 0 && !pickedB)
+                        if (!pickedB)
                         {
                             try
                             {
                                 elementB = readerB.ReadString();
+                                Console.WriteLine($"Считываем элемент из второго файла: {elementB}");
                                 pickedB = true;
                             }
                             catch (Exception ignore)
@@ -285,18 +316,21 @@ namespace ExternalSort
                     }
                     
 
-                    if (pickedA)
+                    if (counterA > 0 && pickedA)
                     {
-                        if (pickedB)
+                        if (counterB > 0 && pickedB)
                         {
                             if (Menu.LeftBeforeRight(elementA , elementB))
                             {
+                                Console.WriteLine($"Так как строка {elementA} идёт раньше строки {elementB} записываем в файл {elementA}");
                                 bw.Write(elementA);
                                 counterA--;
                                 pickedA = false;
                             }
                             else
                             {
+                                Console.WriteLine($"Так как строка {elementB} идёт раньше строки {elementA} записываем в файл {elementB}");
+
                                 bw.Write(elementB);
                                 counterB--;
                                 pickedB = false;
@@ -304,6 +338,7 @@ namespace ExternalSort
                         }
                         else
                         {
+                            Console.WriteLine($"Так как был последовательноть из второго файла кончилась записываем в файл {elementA}");
                             bw.Write(elementA);
                             counterA--;
                             pickedA = false;
@@ -311,6 +346,7 @@ namespace ExternalSort
                     }
                     else if (pickedB)
                     {
+                        Console.WriteLine($"Так как был последовательноть из первого файла кончилась записываем в файл {elementB}");
                         bw.Write(elementB);
                         counterB--;
                         pickedB = false;
@@ -318,6 +354,7 @@ namespace ExternalSort
                 }
 
                 iterations *= 2; // увеличиваем размер серии в 2 раза
+                Console.WriteLine("Увеличиваем размер серии в 2 раза");
             }
         }
 
